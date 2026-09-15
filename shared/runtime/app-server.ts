@@ -296,7 +296,10 @@ export const appServerThreadSchema = z
       .nullable(),
     turns: z.array(threadTurnSchema),
   })
-  .strict();
+  // Codex may add top-level thread metadata between adjacent CLI releases. Gateway only
+  // consumes the fields declared above, so discard unknown top-level fields while retaining
+  // strict validation for the nested structures it actually uses.
+  .strip();
 
 export const gatewayThreadSchema = appServerThreadSchema.omit({ projectId: true }).extend({
   appServerProjectId: z.string().nullable(),
