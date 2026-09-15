@@ -1,0 +1,37 @@
+services:
+  codex-gateway:
+    ports:
+      - "127.0.0.1:8787:3000"
+    depends_on:
+      ssh-tunnel:
+        condition: service_healthy
+
+  ssh-tunnel:
+    build:
+      context: .
+      dockerfile: Dockerfile.ssh-tunnel
+    restart: unless-stopped
+    command:
+      - -N
+      - -L
+      - "0.0.0.0:2222:11.0.2.106:22"
+      - -p
+      - "61001"
+      - -o
+      - IdentitiesOnly=yes
+      - -o
+      - StrictHostKeyChecking=accept-new
+      - -o
+      - ServerAliveInterval=30
+      - -o
+      - ServerAliveCountMax=3
+      - root@125.220.157.135
+    volumes:
+      - "${GATEWAY_SSH_KEY_PATH}:/run/secrets/codex_gateway_ed25519:ro"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "2222"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - web-common
