@@ -7,6 +7,7 @@ import ThreadImageAttachment from "@/components/thread/attachments/ThreadImageAt
 import { threadItemText } from "@/utils/thread-items";
 import type { ThreadHistoryItem } from "~~/shared/types";
 import { recordFromUnknown } from "~~/shared/utils/records";
+import { userFacingMessage } from "@/utils/codex-content";
 
 const props = defineProps<{
   item: ThreadHistoryItem;
@@ -15,7 +16,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
-const text = computed(() => threadItemText(props.item));
+const text = computed(() => userFacingMessage(threadItemText(props.item)));
 type ImagePart = Record<string, unknown> & { type: "image" | "localImage" };
 
 function isImagePart(part: Record<string, unknown> | null): part is ImagePart {

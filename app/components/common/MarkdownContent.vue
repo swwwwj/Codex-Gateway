@@ -7,6 +7,7 @@ import { escapeHtml, highlightCode, normalizeLanguage } from "@/utils/code-highl
 import { useFilePreviewContext } from "@/composables/files/useFilePreviewContext";
 import { useGatewayFileWorkspaceStore } from "@/stores/file-workspace";
 import { useStreamRenderScheduler } from "@/composables/rendering/useStreamRenderScheduler";
+import { renderableCodexMarkdown } from "@/utils/codex-content";
 
 const props = withDefaults(
   defineProps<{
@@ -38,11 +39,11 @@ const markdownScheduler = useStreamRenderScheduler({
 const rendered = computed(() => markdownScheduler.output.value || "");
 
 function renderMarkdownImmediately(content: string) {
-  return markdown.render(content);
+  return markdown.render(renderableCodexMarkdown(content));
 }
 
 async function renderMarkdownEnhanced(content: string, diffLanguage: string) {
-  return await markdown.renderEnhanced(content, async (fence) => {
+  return await markdown.renderEnhanced(renderableCodexMarkdown(content), async (fence) => {
     const normalizedLanguage = normalizeLanguage(fence.language);
     if (normalizedLanguage === "diff") {
       return `<pre class="syntax-highlight language-diff"><code>${await renderDiff(fence.content, diffLanguage)}</code></pre>`;
@@ -112,9 +113,20 @@ function diffLineClass(line: string) {
 
 function handleClick(event: MouseEvent) {
   const anchor = (event.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
-  if (!anchor || !filePreviewContext) {
+  if (!anchor) {
     return;
   }
+  const followup = new URL(anchor.href, window.location.href).hash.match(/^#codex-followup=(.*)$/);
+  if (followup?.[1]) {
+    event.preventDefault();
+    window.dispatchEvent(
+      new CustomEvent("codex:composer-fill", {
+        detail: { text: decodeURIComponent(followup[1]) },
+      }),
+    );
+    return;
+  }
+  if (!filePreviewContext) return;
   const target = parseRemoteFileLink(anchor.href, window.location.href);
   if (!target) {
     return;

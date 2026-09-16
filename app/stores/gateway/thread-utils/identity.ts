@@ -1,6 +1,7 @@
 import type { GatewayThread } from "~~/shared/types";
 import { firstNonEmptyString } from "~~/shared/utils/strings";
 import { unknownGatewayErrorFromError } from "../errors";
+import { userFacingThreadLabel } from "@/utils/codex-content";
 
 export interface ErrorMessageLabels {
   scope: string;
@@ -85,7 +86,7 @@ export function titleForThread(
 ) {
   if (thread === null || thread === undefined) return "Untitled";
   const label = firstNonEmptyString([thread.title, thread.name, thread.preview]);
-  if (label !== null) return label;
+  if (label !== null) return userFacingThreadLabel(label);
   const identity = thread.id ?? thread.threadId;
   return identity === undefined ? "Untitled" : String(identity);
 }

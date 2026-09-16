@@ -1,4 +1,5 @@
 import { ref, watch } from "vue";
+import { useEventListener } from "@vueuse/core";
 
 import { storeToRefs } from "pinia";
 import type { UploadedFileRecord } from "~~/shared/types";
@@ -38,6 +39,17 @@ export function useComposerDraft() {
     // threads, so both hydration and persistence intentionally run synchronously.
     { flush: "sync", immediate: true },
   );
+
+  useEventListener(window, "codex:composer-fill", (event) => {
+    const detail = (event as CustomEvent<{ text?: unknown }>).detail;
+    if (typeof detail?.text !== "string" || detail.text.trim() === "") return;
+    turnText.value = detail.text;
+    requestAnimationFrame(() => {
+      const composer = document.querySelector<HTMLTextAreaElement>("textarea");
+      composer?.focus();
+      composer?.scrollIntoView({ block: "nearest" });
+    });
+  });
 
   watch(
     [turnText, attachedFiles, fileReferences],
